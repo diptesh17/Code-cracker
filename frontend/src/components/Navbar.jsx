@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 
 const Navbar = () => {
@@ -11,7 +12,6 @@ const Navbar = () => {
       {/* Links */}
       <div className="hidden md:flex gap-6 text-lg">
         <Link to="/" className="hover:text-blue-300 transition">Home</Link>
-        <Link to="/about" className="hover:text-blue-300 transition">About</Link>
         <Link to="/developers" className="hover:text-blue-300 transition">Developers</Link>
         <Link to="/recruiters" className="hover:text-blue-300 transition">Recruiters</Link>
       </div>
