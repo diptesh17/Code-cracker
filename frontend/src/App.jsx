@@ -1,31 +1,25 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import DeveloperDashboard from "./pages/DeveloperDashboard";
-import RecruiterDashboard from "./pages/RecruiterDashboard";
-import ProfilePage from "./pages/ProfilePage";
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import Login from './components/Login';
+import Signup from './components/Signup';
+import RecruiterDashboard from './components/RecruiterDashboard';
+import StudentDashboard from './components/StudentDashboard';
+import './App.css';
 
 function App() {
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen bg-gray-900 text-white">
+    <AuthProvider>
+      <Router>
         <Navbar />
-        <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/developer-dashboard" element={<DeveloperDashboard />} />
-            <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
-            <Route path="/profile/:id" element={<ProfilePage />} />
-          </Routes>
-        </main>
-        <Footer />
-      </div>
-    </Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/recruiter-dashboard" element={<RecruiterDashboard />} />
+          <Route path="/student-dashboard" element={<StudentDashboard />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

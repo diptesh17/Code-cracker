@@ -1,60 +1,78 @@
-import User from "../models/User.js";
-import generateToken from "../utils/generateToken.js";
+const Recruiter = require('../models/Recruiter');
+const Student = require('../models/Student');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-export const signup = async (req, res) => {
-  const { role, email, password, company, leetcode, codechef, gfg, github } = req.body;
-
+// Register Recruiter
+const registerRecruiter = async (req, res) => {
+  const { name, email, password, companyName, phone } = req.body;
   try {
-    const userExists = await User.findOne({ email });
-    if (userExists) return res.status(400).json({ message: "User already exists" });
+    let recruiter = await Recruiter.findOne({ email });
+    if (recruiter) return res.status(400).json({ msg: 'Recruiter already exists' });
 
-    const user = await User.create({
-      role,
-      email,
-      password,
-      company: role === "recruiter" ? company : undefined,
-      leetcode: role === "developer" ? leetcode : undefined,
-      codechef: role === "developer" ? codechef : undefined,
-      gfg: role === "developer" ? gfg : undefined,
-      github: role === "developer" ? github : undefined,
+    recruiter = new Recruiter({ name, email, password, companyName, phone });
+    const salt = await bcrypt.genSalt(10);
+    recruiter.password = await bcrypt.hash(password, salt);
+    await recruiter.save();
+
+    const payload = { recruiter: { id: recruiter.id } };
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+      if (err) throw err;
+      res.json({ token });
     });
-
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(400).json({ message: "Invalid user data" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
 };
 
-export const login = async (req, res) => {
-  const { email, password, company } = req.body;
-
+// Register Student
+const registerStudent = async (req, res) => {
+  const { name, email, password, codingProfiles } = req.body;
   try {
-    const user = await User.findOne({ email });
+    let student = await Student.findOne({ email });
+    if (student) return res.status(400).json({ msg: 'Student already exists' });
 
-    if (user && (await user.matchPassword(password))) {
-      if (user.role === "recruiter" && user.company !== company) {
-        return res.status(400).json({ message: "Invalid company name" });
-      }
+    student = new Student({ name, email, password, codingProfiles });
+    const salt = await bcrypt.genSalt(10);
+    student.password = await bcrypt.hash(password, salt);
+    await student.save();
 
-      res.json({
-        _id: user._id,
-        email: user.email,
-        role: user.role,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: "Invalid credentials" });
-    }
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const payload = { student: { id: student.id } };
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+      if (err) throw err;
+      res.json({ token });
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
   }
 };
+
+// Login
+const login = async (req, res) => {
+  const { email, password, role } = req.body;
+  try {
+    let user;
+    if (role === 'recruiter') {
+      user = await Recruiter.findOne({ email });
+    } else if (role === 'student') {
+      user = await Student.findOne({ email });
+    }
+    if (!user) return res.status(400).json({ msg: 'Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ msg: 'Invalid credentials' });
+
+    const payload = { user: { id: user.id, role } };
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
+      if (err) throw err;
+      res.json({ token, role });
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+};
+
+module.exports = { registerRecruiter, registerStudent, login };
